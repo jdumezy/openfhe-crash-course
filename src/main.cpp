@@ -1,4 +1,5 @@
 #include "openfhe.h"
+#include "test.hpp"
 
 using namespace lbcrypto;
 
@@ -26,10 +27,12 @@ int main() {
   std::vector<std::complex<double>> x2 = {1i, 2i, 3i, 1+1i, 0, 1, 2, 3};
 
   std::cout << "Input :" << std::endl;
-  std::cout << "\t x1 = " << x1 << std::endl;
-  std::cout << "\t x2 = " << x2 << std::endl << std::endl;
+  std::cout << "x1 ";
+  printComplexVector(x1);
+  std::cout << "x2 ";
+  printComplexVector(x2);
 
-  std::cout << "Computing: x1 * x2\n" << std::endl;
+  std::cout << "\nComputing: x1 * x2\n" << std::endl;
 
   Plaintext ptx1 = cc->MakeCKKSPackedPlaintext(x1);
   Plaintext ptx2 = cc->MakeCKKSPackedPlaintext(x2);
@@ -44,8 +47,8 @@ int main() {
   Plaintext result;
   cc->Decrypt(keys.secretKey, ctx_result, &result);
   result->SetLength(8);
-  std::cout.precision(8);
-  std::cout << "result = " << result << std::endl << std::endl;
+  std::cout << "Result: " << std::endl;
+  printComplexVector(result->GetCKKSPackedValue());
 
   std::cout << "Done" << std::endl;
 

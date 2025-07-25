@@ -58,4 +58,4 @@ file(GLOB LIB_SOURCES "${PROJECT_SOURCE_DIR}/src/lib/*.cpp")
 include_directories(${PROJECT_SOURCE_DIR}/src/include)
 
 # Compile project
-add_executable(my-project src/my-project.cpp ${LIB_SOURCES})
+add_executable(main src/main.cpp ${LIB_SOURCES})
