@@ -1,54 +1,61 @@
 #include "openfhe.h"
 
+using namespace std::complex_literals; 
 using namespace lbcrypto;
 
 int main() {
-  std::cout << "Some very simple example" << std::endl;
+    std::cout << "\n=== CKKS Complex Multiplication Example ===\n" << std::endl;
 
-  // Setup ================================
-  CCParams<CryptoContextCKKSRNS> parameters;
-  parameters.SetMultiplicativeDepth(1);
-  parameters.SetScalingModSize(50);
-  parameters.SetBatchSize(8);
-  parameters.SetCKKSDataType(COMPLEX);
+    // Setup ================================
+    CCParams<CryptoContextCKKSRNS> parameters;
+    parameters.SetSecretKeyDist(SPARSE_TERNARY);
+    parameters.SetSecurityLevel(HEStd_128_classic);
 
-  auto cc = GenCryptoContext(parameters);
+    parameters.SetMultiplicativeDepth(1);
+    parameters.SetScalingModSize(50);
+    parameters.SetBatchSize(8);
+    parameters.SetCKKSDataType(COMPLEX);
 
-  cc->Enable(PKE);
-  cc->Enable(KEYSWITCH);
-  cc->Enable(LEVELEDSHE);
+    auto cc = GenCryptoContext(parameters);
+    cc->Enable(PKE);
+    cc->Enable(KEYSWITCH);
+    cc->Enable(LEVELEDSHE);
 
-  auto keys = cc->KeyGen();
-  cc->EvalMultKeyGen(keys.secretKey);
+    auto keys = cc->KeyGen();
+    cc->EvalMultKeyGen(keys.secretKey);
 
-  // Encryption ===========================
-  std::vector<std::complex<double>> x1 = {0, 1, 2, 3, 1i, 2i, 3i, 1+1i};
-  std::vector<std::complex<double>> x2 = {1i, 2i, 3i, 1+1i, 0, 1, 2, 3};
+    // Encryption ===========================
+    std::vector<std::complex<double>> x1 = {0, 1, 2, 3, 1i, 2i, 3i, 1.0+1.0i};
+    std::vector<std::complex<double>> x2 = {1i, 2i, 3i, 1.0+1.0i, 0, 1, 2, 3};
 
-  std::cout << "Input :" << std::endl;
-  std::cout << "\t x1 = " << x1 << std::endl;
-  std::cout << "\t x2 = " << x2 << std::endl << std::endl;
+    Plaintext ptx1 = cc->MakeCKKSPackedPlaintext(x1);
+    Plaintext ptx2 = cc->MakeCKKSPackedPlaintext(x2);
 
-  std::cout << "Computing: x1 * x2\n" << std::endl;
+    auto ctx1 = cc->Encrypt(keys.publicKey, ptx1);
+    auto ctx2 = cc->Encrypt(keys.publicKey, ptx2);
 
-  Plaintext ptx1 = cc->MakeCKKSPackedPlaintext(x1);
-  Plaintext ptx2 = cc->MakeCKKSPackedPlaintext(x2);
+    // Computation ==========================
+    auto ctx_result = cc->EvalMult(ctx1, ctx2);
 
-  Ciphertext<DCRTPoly> ctx1 = cc->Encrypt(keys.publicKey, ptx1);
-  Ciphertext<DCRTPoly> ctx2 = cc->Encrypt(keys.publicKey, ptx2);
+    // Decryption ===========================
+    Plaintext result;
+    cc->Decrypt(keys.secretKey, ctx_result, &result);
+    result->SetLength(8);
 
-  // Computation ==========================
-  auto ctx_result = cc->EvalMult(ctx1, ctx2);
+    auto resVec = result->GetCKKSPackedValue();
 
-  // Decryption ===========================
-  Plaintext result;
-  cc->Decrypt(keys.secretKey, ctx_result, &result);
-  result->SetLength(8);
-  std::cout.precision(8);
-  std::cout << "result = " << result << std::endl << std::endl;
+    std::cout.precision(1);
+    std::cout << std::fixed;
 
-  std::cout << "Done" << std::endl;
+    std::cout << "Index\tInput x1\t\tInput x2\t\tResult" << std::endl;
+    std::cout << "------------------------------------------------------------------" << std::endl;
 
-  return 0;
+    for (size_t i = 0; i < 8; i++) {
+        std::cout << i << "\t" 
+                  << x1[i] << "\t\t" 
+                  << x2[i] << "\t\t" 
+                  << resVec[i] << std::endl;
+    }
+
+    return 0;
 }
-

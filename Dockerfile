@@ -14,4 +14,14 @@ RUN mkdir build && cd build && cmake .. \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ && make -j$(nproc) && make install
 
+WORKDIR /usr/src/app/openfhe-development
+
+COPY ./example/* ./src/pke/examples/
+
+RUN cd build && cmake .. \
+    -DCMAKE_C_COMPILER=clang \
+    -DCMAKE_CXX_COMPILER=clang++ && make -j$(nproc)
+
 RUN ldconfig
+
+WORKDIR /usr/src/app
